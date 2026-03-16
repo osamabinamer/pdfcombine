@@ -1,5 +1,5 @@
 """
-Serverless handler for FastAPI on Vercel
+Serverless handler for FastAPI on Vercel using Mangum
 """
 import sys
 import logging
@@ -15,19 +15,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     # Import the FastAPI app
     from main import app
-    from serverless_http import asgi
+    from mangum import Mangum
     
-    # Wrap FastAPI app for serverless
-    handler = asgi(app)
-    logger.info("FastAPI app initialized successfully")
+    # Wrap FastAPI app with Mangum for serverless
+    handler = Mangum(app)
+    logger.info("FastAPI app with Mangum handler initialized successfully")
     
 except Exception as e:
     logger.error(f"Failed to initialize FastAPI app: {e}", exc_info=True)
     
     # Fallback handler that returns an error
-    async def handler(event, context):
+    def handler(event, context):
         return {
             'statusCode': 500,
             'body': f'Server initialization failed: {str(e)}'
         }
+
 

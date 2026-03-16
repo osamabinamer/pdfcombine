@@ -1,7 +1,9 @@
 """
-Vercel Entry Point - Routes to API handler
+Vercel Entry Point - Routes to FastAPI via Mangum
 """
-from api.index import handler
+from main import app
+from mangum import Mangum
 
-# This is required for Vercel to find the entry point
-__all__ = ['handler']
+# Create the serverless handler
+handler = Mangum(app)
+
