@@ -1,19 +1,10 @@
-﻿# FastAPI & Async Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.6.0
-
-# PDF & Image Processing
 pypdf==4.0.1
 pillow==11.2.1
-
-# Scheduling & Background Tasks
 APScheduler==3.10.4
-
-# Utilities
 python-multipart==0.0.6
 aiofiles==23.2.1
-
-# Optional: For production
 gunicorn==21.2.0
 python-dotenv==1.0.0
