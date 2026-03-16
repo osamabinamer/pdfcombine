@@ -37,8 +37,20 @@ logger = logging.getLogger(__name__)
 # ========== CONFIGURATION ==========
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-OUTPUT_DIR = Path('output')
-OUTPUT_DIR.mkdir(exist_ok=True)
+IS_SERVERLESS = os.getenv('VERCEL') == '1'
+
+# Use /tmp for serverless, 'output' for local
+if IS_SERVERLESS:
+    OUTPUT_DIR = Path('/tmp/pdfcombine_output')
+else:
+    OUTPUT_DIR = Path('output')
+
+# Create output directory if possible (may fail in serverless)
+try:
+    OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
+except Exception as e:
+    logger.warning(f"Could not create output directory: {e}")
+
 CLEANUP_AGE_HOURS = 24
 
 # ========== PYDANTIC MODELS ==========
@@ -125,7 +137,6 @@ def validate_file_size(file_size: int) -> bool:
 
 # ========== BACKGROUND SCHEDULER ==========
 scheduler = BackgroundScheduler()
-IS_SERVERLESS = os.getenv('VERCEL') == '1'  # Disable scheduler in serverless
 
 @app.on_event("startup")
 async def startup_event():
@@ -179,10 +190,31 @@ async def value_error_exception_handler(request, exc):
 
 # ========== ROUTES ==========
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "environment": "serverless" if IS_SERVERLESS else "local"}
+
+
 @app.get("/")
 async def serve_index():
     """Serve the main HTML page"""
-    return FileResponse("templates/index.html", media_type="text/html")
+    # Try multiple possible paths for the template
+    possible_paths = [
+        Path("templates/index.html"),
+        Path(__file__).parent / "templates" / "index.html",
+    ]
+    
+    for path in possible_paths:
+        if path.exists():
+            return FileResponse(str(path), media_type="text/html")
+    
+    # Fallback if file not found
+    logger.warning("index.html not found, returning placeholder")
+    return JSONResponse(
+        status_code=200,
+        content={"message": "PDFStudio API is running. index.html not found."}
+    )
 
 
 @app.post("/api/merge")
