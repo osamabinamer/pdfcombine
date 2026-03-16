@@ -125,26 +125,34 @@ def validate_file_size(file_size: int) -> bool:
 
 # ========== BACKGROUND SCHEDULER ==========
 scheduler = BackgroundScheduler()
+IS_SERVERLESS = os.getenv('VERCEL') == '1'  # Disable scheduler in serverless
 
 @app.on_event("startup")
 async def startup_event():
     """Start background cleanup scheduler on app startup"""
-    scheduler.add_job(
-        cleanup_old_files,
-        trigger=IntervalTrigger(hours=1),
-        id='cleanup_job',
-        name='Cleanup old temp files',
-        replace_existing=True
-    )
-    scheduler.start()
-    logger.info("Background scheduler started")
+    if not IS_SERVERLESS:
+        try:
+            scheduler.add_job(
+                cleanup_old_files,
+                trigger=IntervalTrigger(hours=1),
+                id='cleanup_job',
+                name='Cleanup old temp files',
+                replace_existing=True
+            )
+            scheduler.start()
+            logger.info("Background scheduler started")
+        except Exception as e:
+            logger.warning(f"Could not start scheduler: {e}")
+    else:
+        logger.info("Running in serverless environment - background scheduler disabled")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop scheduler on app shutdown"""
-    scheduler.shutdown()
-    logger.info("Background scheduler stopped")
+    if not IS_SERVERLESS and scheduler.running:
+        scheduler.shutdown()
+        logger.info("Background scheduler stopped")
 
 
 # ========== ERROR HANDLERS ==========
