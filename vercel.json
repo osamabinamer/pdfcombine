@@ -16,5 +16,6 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ]
+  ],
+  "ignoreCommand": "git diff --quiet $VERCEL_GIT_PREV_COMMIT $VERCEL_GIT_COMMIT -- . ':!README.md' ':!.gitignore'"
 }
