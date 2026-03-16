@@ -1,9 +1,4 @@
 {
   "buildCommand": "pip install -r requirements.txt",
-  "devCommand": "python -m uvicorn main:app --host 0.0.0.0 --port 3000",
-  "functions": {
-    "app.py": {
-      "runtime": "python3.12"
-    }
-  }
+  "devCommand": "python -m uvicorn main:app --host 0.0.0.0 --port 3000"
 }
